@@ -1,0 +1,36 @@
+# Dependency directories
+node_modules/
+target/
+.gradle/
+build/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+.DS_Store
+
+# Compiled files
+*.class
+*.log
+*.jar
+*.war
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vite / React
+dist/
+dist-ssr/
+*.local
+
+# System
+Thumbs.db
+desktop.ini
