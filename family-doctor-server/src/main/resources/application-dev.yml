@@ -24,7 +24,7 @@ spring:
   # ==================== Spring AI deepseek====================
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:sk-229c8647b7ec4d9395427fa85e460f9b}
+      api-key: ${OPENAI_API_KEY:your_aliyun_api_key}
       base-url: ${OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
       chat:
         options:
