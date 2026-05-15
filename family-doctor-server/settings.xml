@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+    <!-- 本地仓库路径配置（如果使用命令行参数 -Dmaven.repo.local 指定，此处理想保留默认或按需修改） -->
+    <!-- <localRepository>E:\soft\maven\nexus\repository</localRepository> -->
+
+    <pluginGroups>
+        <pluginGroup>org.springframework.boot</pluginGroup>
+    </pluginGroups>
+
+    <mirrors>
+        <!-- 覆盖全局安装配置中存在的离线或代理镜像，防止其全局拦截 Spring Milestones 下载请求 -->
+        <mirror>
+            <id>maven-public</id>
+            <mirrorOf>none</mirrorOf>
+            <url>http://localhost</url>
+        </mirror>
+        <mirror>
+            <id>nexus-aliyun</id>
+            <mirrorOf>none</mirrorOf>
+            <url>http://localhost</url>
+        </mirror>
+
+        <!-- 阿里云公共镜像仓库：排除 spring-milestones，让业务依赖走阿里云加速，Spring 组件走官方直连 -->
+        <mirror>
+            <id>aliyunmaven</id>
+            <mirrorOf>*,!spring-milestones</mirrorOf>
+            <name>阿里云公共仓库</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+        </mirror>
+    </mirrors>
+
+    <profiles>
+        <profile>
+            <id>spring-repos</id>
+            <repositories>
+                <repository>
+                    <id>spring-milestones</id>
+                    <name>Spring Milestones</name>
+                    <url>https://repo.spring.io/milestone</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>spring-milestones</id>
+                    <name>Spring Milestones</name>
+                    <url>https://repo.spring.io/milestone</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>spring-repos</activeProfile>
+    </activeProfiles>
+</settings>

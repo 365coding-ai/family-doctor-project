@@ -1,0 +1,47 @@
+# ==================== 开发环境配置 ====================
+# 指向 VirtualBox 虚机中的 Docker 容器
+# 虚机 IP: 192.168.56.105 (CentOS7-05-docker)
+
+spring:
+  # ==================== MySQL (虚机 Docker) ====================
+  datasource:
+    url: jdbc:mysql://192.168.56.105:3306/family_doctor?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root123
+
+  # ==================== Redis (虚机 Docker) ====================
+  data:
+    redis:
+      host: 192.168.56.105
+      port: 6379
+
+  # ==================== JPA ====================
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+  # ==================== Spring AI deepseek====================
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-229c8647b7ec4d9395427fa85e460f9b}
+      base-url: ${OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:qwen3.5-plus}
+      embedding:
+        options:
+          model: 'text-embedding-v3'
+# ==================== PGVector (虚机 Docker) ====================
+pgvector:
+  datasource:
+    url: jdbc:postgresql://192.168.56.105:5432/vectorstore
+    username: postgres
+    password: postgres
+
+# ==================== 日志 ====================
+logging:
+  level:
+    com.familydoctor: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
