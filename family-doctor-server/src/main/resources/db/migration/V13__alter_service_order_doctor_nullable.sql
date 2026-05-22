@@ -1,0 +1,1 @@
+ALTER TABLE service_order MODIFY COLUMN doctor_id BIGINT NULL;

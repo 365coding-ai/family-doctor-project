@@ -1,18 +1,54 @@
-import { Link } from 'react-router-dom';
-import { Search, Bell, Calendar, Home, MessageCircle, ChevronRight, Star, MapPin, ChevronDown, Stethoscope, Syringe, Thermometer, HeartPulse, Baby, Pill } from 'lucide-react';
-import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Bell, Calendar, Home, MessageCircle, ChevronRight, Star, MapPin, ChevronDown, Stethoscope, Syringe, Thermometer, HeartPulse, Baby, Pill, Activity, Leaf } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { doctorApi, serviceCategoryApi, Doctor, type ServiceCategory } from '../lib/api';
 
-const hotServices = [
-  { icon: Stethoscope, label: '上门问诊', desc: '医生上门', color: 'bg-primary-container text-on-primary-container' },
-  { icon: Syringe, label: '上门输液', desc: '专业护士', color: 'bg-secondary-container text-on-secondary-container' },
-  { icon: HeartPulse, label: '上门护理', desc: '术后康复', color: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' },
-  { icon: Thermometer, label: '上门体检', desc: '全面检查', color: 'bg-primary-fixed text-on-primary-fixed-variant' },
-  { icon: Baby, label: '母婴护理', desc: '新生儿照护', color: 'bg-secondary-fixed text-on-secondary-fixed-variant' },
-  { icon: Pill, label: '伤口换药', desc: '无菌操作', color: 'bg-error-container text-on-error-container' },
-];
+
+const categoryIcons: Record<string, any> = {
+  '临床护理': Syringe,
+  '母婴护理': Baby,
+  '专科护理': Stethoscope,
+  '居家服务': Home,
+  '康复护理': Activity,
+  '中医护理': Leaf,
+};
+const categoryColors: Record<string, string> = {
+  '临床护理': 'from-blue-500 to-indigo-500',
+  '母婴护理': 'from-pink-500 to-rose-500',
+  '专科护理': 'from-emerald-500 to-teal-500',
+  '居家服务': 'from-amber-500 to-orange-500',
+  '康复护理': 'from-purple-500 to-violet-500',
+  '中医护理': 'from-green-500 to-emerald-600',
+};
+
+let cachedNearbyDoctors: Doctor[] | null = null;
+let cachedCategories: ServiceCategory[] | null = null;
 
 export default function HomeScreen() {
+  const navigate = useNavigate();
   const [address] = useState('朝阳区建国路88号 国贸中心');
+  const [nearbyDoctors, setNearbyDoctors] = useState<Doctor[]>(cachedNearbyDoctors || []);
+  const [categories, setCategories] = useState<ServiceCategory[]>(cachedCategories || []);
+
+  useEffect(() => {
+    if (!cachedNearbyDoctors) {
+      doctorApi.getNearby(39.9, 116.4, 5)
+        .then(res => {
+          cachedNearbyDoctors = res;
+          setNearbyDoctors(res);
+        })
+        .catch(console.error);
+    }
+    
+    if (!cachedCategories) {
+      serviceCategoryApi.getAll(6)
+        .then(res => {
+          cachedCategories = res;
+          setCategories(res);
+        })
+        .catch(console.error);
+    }
+  }, []);
 
   return (
     <div className="flex flex-col gap-5">
@@ -60,7 +96,7 @@ export default function HomeScreen() {
             <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center"><Calendar size={24} /></div>
             <span className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-on-surface">预约挂号</span>
           </Link>
-          <Link to="/search" className="flex flex-col items-center justify-center gap-2">
+          <Link to="/service/categories" className="flex flex-col items-center justify-center gap-2">
             <div className="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center"><Home size={24} /></div>
             <span className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-on-surface">上门服务</span>
           </Link>
@@ -75,26 +111,37 @@ export default function HomeScreen() {
         </div>
       </section>
 
-      {/* Hot Services */}
-      <section className="px-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-sans text-xl font-semibold text-on-background">热门服务</h2>
-          <button className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-primary flex items-center">全部服务 <ChevronRight size={16} /></button>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {hotServices.map((svc) => (
-            <Link key={svc.label} to="/search" className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4 flex flex-col items-center gap-2.5 shadow-sm hover:shadow-md transition-all active:scale-[0.97]">
-              <div className={`w-11 h-11 rounded-xl ${svc.color} flex items-center justify-center`}>
-                <svc.icon size={22} />
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="font-sans text-sm font-semibold text-on-surface">{svc.label}</span>
-                <span className="font-sans text-[11px] text-on-surface-variant mt-0.5">{svc.desc}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+
+      {/* 热门服务 */}
+      {categories.length > 0 && (
+        <section className="px-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-sans text-xl font-semibold text-on-background">热门服务</h2>
+            <Link to="/service/categories" className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-primary flex items-center">全部服务 <ChevronRight size={16} /></Link>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {categories.map((cat) => {
+              const Icon = categoryIcons[cat.name] || Stethoscope;
+              const gradient = categoryColors[cat.name] || 'from-gray-500 to-gray-600';
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => navigate('/service/category', { state: { categoryId: cat.id, categoryName: cat.name } })}
+                  className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4 flex flex-col items-center gap-2.5 shadow-sm hover:shadow-md transition-all active:scale-[0.97]"
+                >
+                  <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center shadow-md`}>
+                    <Icon size={22} />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-sans text-sm font-semibold text-on-surface">{cat.name}</span>
+                    <span className="font-sans text-[11px] text-on-surface-variant mt-0.5 line-clamp-1">{cat.description}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Nearby Hot Doctors */}
       <section className="pl-4 pt-1 pb-4">
@@ -103,62 +150,39 @@ export default function HomeScreen() {
           <Link to="/search" className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-primary flex items-center">查看全部 <ChevronRight size={16} /></Link>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-2 pr-4 scrollbar-none">
-          {/* Doctor Card 1 */}
-          <Link to="/doctor/1" className="w-[280px] shrink-0 bg-surface-container-lowest rounded-xl border border-outline-variant/50 p-4 flex flex-col gap-4 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-primary-fixed/20 rounded-bl-full -z-10"></div>
-            <div className="flex items-start gap-4">
-              <div className="relative">
-                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200" alt="Dr" className="w-16 h-16 rounded-xl object-cover border border-surface-variant" />
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#10b981] border-2 border-surface-container-lowest rounded-full"></div>
-              </div>
-              <div className="flex flex-col flex-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-sans text-lg font-semibold text-on-background">李秀英</h3>
-                  <div className="flex items-center gap-1 bg-tertiary-fixed/30 px-2 py-0.5 rounded text-tertiary">
-                    <Star size={12} className="fill-current" />
-                    <span className="font-['Atkinson_Hyperlegible_Next'] text-[10px] font-semibold">4.9</span>
+          {nearbyDoctors.map((doc, idx) => {
+            const colorClass = idx % 2 === 0 ? 'bg-primary-fixed' : 'bg-secondary-fixed';
+            const badgeColor = doc.status === 1 ? 'bg-[#10b981]' : 'bg-outline-variant';
+            return (
+              <Link key={doc.id} to={`/doctor/${doc.id}`} className="w-[280px] shrink-0 bg-surface-container-lowest rounded-xl border border-outline-variant/50 p-4 flex flex-col gap-4 shadow-sm relative overflow-hidden">
+                <div className={`absolute top-0 right-0 w-16 h-16 ${colorClass}/20 rounded-bl-full -z-10`}></div>
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <img src={doc.avatarUrl || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200'} alt={doc.name} className="w-16 h-16 rounded-xl object-cover border border-surface-variant" />
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${badgeColor} border-2 border-surface-container-lowest rounded-full`}></div>
+                  </div>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-sans text-lg font-semibold text-on-background">{doc.name}</h3>
+                      <div className="flex items-center gap-1 bg-tertiary-fixed/30 px-2 py-0.5 rounded text-tertiary">
+                        <Star size={12} className="fill-current" />
+                        <span className="font-['Atkinson_Hyperlegible_Next'] text-[10px] font-semibold">{doc.rating || '5.0'}</span>
+                      </div>
+                    </div>
+                    <span className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-on-surface-variant mb-1">{doc.title || '主治医师'}</span>
+                    <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded w-max font-['Atkinson_Hyperlegible_Next'] text-[10px] font-semibold">{doc.department}</span>
                   </div>
                 </div>
-                <span className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-on-surface-variant mb-1">主任医师</span>
-                <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded w-max font-['Atkinson_Hyperlegible_Next'] text-[10px] font-semibold">心血管内科</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-on-surface-variant border-t border-surface-variant pt-3">
-              <div className="flex items-center gap-1">
-                <MapPin size={12} className="text-primary" />
-                <span className="font-sans text-[12px]">距您 1.2km</span>
-              </div>
-              <span className="font-sans text-[12px] text-secondary font-semibold">可上门</span>
-            </div>
-          </Link>
-          {/* Doctor Card 2 */}
-          <Link to="/doctor/2" className="w-[280px] shrink-0 bg-surface-container-lowest rounded-xl border border-outline-variant/50 p-4 flex flex-col gap-4 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-secondary-fixed/20 rounded-bl-full -z-10"></div>
-            <div className="flex items-start gap-4">
-              <div className="relative">
-                <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200" alt="Dr" className="w-16 h-16 rounded-xl object-cover border border-surface-variant" />
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-outline-variant border-2 border-surface-container-lowest rounded-full"></div>
-              </div>
-              <div className="flex flex-col flex-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-sans text-lg font-semibold text-on-background">王建国</h3>
-                  <div className="flex items-center gap-1 bg-tertiary-fixed/30 px-2 py-0.5 rounded text-tertiary">
-                    <Star size={12} className="fill-current" />
-                    <span className="font-['Atkinson_Hyperlegible_Next'] text-[10px] font-semibold">4.8</span>
+                <div className="flex items-center justify-between text-on-surface-variant border-t border-surface-variant pt-3">
+                  <div className="flex items-center gap-1">
+                    <MapPin size={12} className="text-primary" />
+                    <span className="font-sans text-[12px]">距您 {(1.2 + idx * 1.5).toFixed(1)}km</span>
                   </div>
+                  <span className={`font-sans text-[12px] font-semibold ${doc.canHomeVisit ? 'text-secondary' : 'text-on-surface-variant'}`}>{doc.canHomeVisit ? '可上门' : '暂不可上门'}</span>
                 </div>
-                <span className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold text-on-surface-variant mb-1">副主任医师</span>
-                <span className="inline-block bg-primary/10 text-primary px-2 py-1 rounded w-max font-['Atkinson_Hyperlegible_Next'] text-[10px] font-semibold">儿科</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-on-surface-variant border-t border-surface-variant pt-3">
-              <div className="flex items-center gap-1">
-                <MapPin size={12} className="text-primary" />
-                <span className="font-sans text-[12px]">距您 2.8km</span>
-              </div>
-              <span className="font-sans text-[12px] text-on-surface-variant">暂不可上门</span>
-            </div>
-          </Link>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>

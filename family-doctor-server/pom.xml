@@ -127,6 +127,13 @@
             <version>4.39.218.ALL</version>
         </dependency>
 
+        <!-- ==================== MinIO 对象存储 ==================== -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.10</version>
+        </dependency>
+
         <!-- ==================== 工具 ==================== -->
         <dependency>
             <groupId>org.projectlombok</groupId>

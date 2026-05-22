@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -14,12 +13,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     command: --default-authentication-plugin=caching_sha2_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+    restart: unless-stopped
   redis:
     image: redis:7-alpine
     container_name: fd-redis
@@ -27,12 +21,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+    restart: unless-stopped
   pgvector:
     image: pgvector/pgvector:pg16
     container_name: fd-pgvector
@@ -44,13 +33,24 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - pgvector_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    restart: unless-stopped
+  minio:
+    image: minio/minio:latest
+    container_name: fd-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      TZ: Asia/Shanghai
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
 
 volumes:
   mysql_data:
   redis_data:
   pgvector_data:
+  minio_data:

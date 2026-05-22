@@ -39,7 +39,8 @@ export default function PaymentSuccessScreen() {
 
       <div className="w-full mt-auto pt-8 flex flex-col gap-4">
          <Link 
-           to={order ? `/order/${order.id}` : '/orders'} 
+           to={order ? "/order" : "/orders"} 
+           state={order ? { orderId: order.orderNo } : undefined}
            className="w-full h-[56px] bg-primary text-on-primary rounded-full font-sans text-lg font-bold flex items-center justify-center shadow-lg active:scale-95 transition-all"
          >
             查看详情

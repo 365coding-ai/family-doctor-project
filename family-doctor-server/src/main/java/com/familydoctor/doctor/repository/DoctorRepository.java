@@ -26,4 +26,13 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Page<Doctor> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     List<Doctor> findByCanHomeVisitTrueAndStatus(Integer status);
+
+    @Query("SELECT d.id as id, u.nickname as name, d.title as title, " +
+           "d.department as department, d.hospital as hospital, " +
+           "u.avatarUrl as avatarUrl, d.rating as rating, " +
+           "d.serviceCount as serviceCount, d.introduction as introduction, " +
+           "d.canHomeVisit as canHomeVisit, d.status as status, u.id as userId " +
+           "FROM Doctor d JOIN User u ON d.userId = u.id " +
+           "WHERE d.canHomeVisit = true AND d.status = :status")
+    List<com.familydoctor.doctor.dto.NearbyDoctorVO> findNearbyDoctorsWithUser(@Param("status") Integer status);
 }

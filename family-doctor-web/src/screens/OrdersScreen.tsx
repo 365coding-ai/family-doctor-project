@@ -97,7 +97,8 @@ export default function OrdersScreen() {
             return (
               <Link 
                 key={order.id} 
-                to={`/order/${order.id}`}
+                to="/order"
+                state={{ orderId: order.orderNo }}
                 className="bg-surface-container-lowest rounded-2xl border border-surface-variant p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
               >
                 <div className="flex justify-between items-center">

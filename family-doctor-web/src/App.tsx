@@ -24,6 +24,12 @@ import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
 import ChatDetailScreen from './screens/ChatDetailScreen';
 import DoctorDashboardScreen from './screens/DoctorDashboardScreen';
+import DoctorOrderDetailScreen from './screens/DoctorOrderDetailScreen';
+import ServiceCategoryListScreen from './screens/ServiceCategoryListScreen';
+import ServiceItemListScreen from './screens/ServiceItemListScreen';
+import ServiceItemDetailScreen from './screens/ServiceItemDetailScreen';
+import NurseSelectScreen from './screens/NurseSelectScreen';
+import NurseDashboardScreen from './screens/NurseDashboardScreen';
 
 // ==================== 需要登录的路由守卫 ====================
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -105,6 +111,7 @@ const AiFab = () => {
 function AppContent() {
   const { isAuthenticated, user } = useAuth();
   const [unreadCount, setUnreadCount] = React.useState(0);
+  const location = useLocation();
 
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -131,8 +138,10 @@ function AppContent() {
     }
   }, [isAuthenticated]);
 
+  const showNav = ['/', '/search', '/orders', '/profile'].includes(location.pathname);
+
   return (
-    <div className="bg-background text-on-background font-sans min-h-screen pb-24 md:pb-0">
+    <div className={cn("bg-background text-on-background font-sans min-h-screen", showNav ? "pb-24 md:pb-0" : "pb-0")}>
       <Routes>
         {/* 公开路由 */}
         <Route path="/login" element={<LoginScreen />} />
@@ -144,7 +153,7 @@ function AppContent() {
         <Route path="/booking/:id" element={<ProtectedRoute><BookingScreen /></ProtectedRoute>} />
         <Route path="/order/confirm" element={<ProtectedRoute><OrderConfirmationScreen /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><OrdersScreen /></ProtectedRoute>} />
-        <Route path="/order/:id" element={<ProtectedRoute><OrderDetailScreen /></ProtectedRoute>} />
+        <Route path="/order" element={<ProtectedRoute><OrderDetailScreen /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
         <Route path="/address" element={<ProtectedRoute><AddressManagementScreen /></ProtectedRoute>} />
         <Route path="/messages" element={<ProtectedRoute><MessagesScreen /></ProtectedRoute>} />
@@ -152,8 +161,16 @@ function AppContent() {
         <Route path="/success" element={<ProtectedRoute><PaymentSuccessScreen /></ProtectedRoute>} />
         <Route path="/ai" element={<ProtectedRoute><AiScreen /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsScreen /></ProtectedRoute>} />
-        <Route path="/chat/:userId" element={<ProtectedRoute><ChatDetailScreen /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><ChatDetailScreen /></ProtectedRoute>} />
         <Route path="/doctor" element={<ProtectedRoute><DoctorDashboardScreen /></ProtectedRoute>} />
+        <Route path="/doctor/order" element={<ProtectedRoute><DoctorOrderDetailScreen /></ProtectedRoute>} />
+
+        {/* 上门护理服务路由 */}
+        <Route path="/service/categories" element={<ServiceCategoryListScreen />} />
+        <Route path="/service/category" element={<ServiceItemListScreen />} />
+        <Route path="/service/item" element={<ServiceItemDetailScreen />} />
+        <Route path="/service/nurse" element={<ProtectedRoute><NurseSelectScreen /></ProtectedRoute>} />
+        <Route path="/nurse" element={<ProtectedRoute><NurseDashboardScreen /></ProtectedRoute>} />
       </Routes>
       <AiFab />
       <BottomNav unreadCount={unreadCount} />

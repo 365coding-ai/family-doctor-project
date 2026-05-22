@@ -182,7 +182,7 @@ export interface Doctor {
   rating: number;
   serviceCount: number;
   specialties: string;
-  description: string;
+  introduction: string;
   consultPrice: number;
   homeVisitPrice: number;
   canHomeVisit: boolean;
@@ -223,7 +223,21 @@ export interface ServiceOrder {
   orderNo: string;
   userId: number;
   doctorId: number;
+  /** GRAPHIC_CONSULT / VIDEO_CONSULT / HOME_VISIT */
   serviceType: string;
+  /** PER_SESSION / PER_MINUTE / SUBSCRIPTION / FIRST_FREE */
+  billingType: string;
+  billingUnitPrice: number | null;
+  billingDurationMin: number | null;
+  billingMaxAmount: number | null;
+  isFirstFree: number;
+  packageId: number | null;
+  serviceItemId?: number;
+  nurseId?: number;
+  specId?: number;
+  trafficFee?: number;
+  materialFee?: number;
+  expireAt: string | null;
   amount: number;
   status: string;
   addressId: number | null;
@@ -233,18 +247,49 @@ export interface ServiceOrder {
   payMethod: string | null;
   payTime: string | null;
   cancelReason: string | null;
+  roomId: string | null;
   createdAt: string;
+}
+
+export interface UserPackage {
+  id: number;
+  userId: number;
+  packageType: string;
+  packageName: string;
+  price: number;
+  totalTimes: number | null;
+  remainingTimes: number | null;
+  startedAt: string | null;
+  expiredAt: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface AddonItem {
+  addonType: string;
+  addonName: string;
+  addonPrice: number;
 }
 
 export const orderApi = {
   create: (data: {
-    doctorId: number;
+    doctorId?: number;
+    nurseId?: number;
+    serviceItemId?: number;
+    specId?: number;
+    trafficFee?: number;
     serviceType: string;
+    billingType?: string;
+    billingUnitPrice?: number;
+    billingDurationMin?: number;
+    billingMaxAmount?: number;
+    packageId?: number;
     amount: number;
     addressId?: number;
     scheduleDate?: string;
     scheduleTime?: string;
     remark?: string;
+    addons?: AddonItem[];
   }) => post<ServiceOrder>('/orders', data),
 
   getMyOrders: (params: { status?: string; page?: number; size?: number }) => {
@@ -262,7 +307,10 @@ export const orderApi = {
 
   pay: (id: number | string) => post<ServiceOrder>(`/orders/${id}/pay`),
 
-  // 仅供测试
+  /** 检查用户与医生之间是否有有效的已支付图文咨询 */
+  checkConsultStatus: (doctorId: number | string) =>
+    get<{ hasActive: boolean; order: ServiceOrder | null }>(`/orders/consult/check?doctorId=${doctorId}`),
+
   updateStatus: (id: number | string, status: string) =>
     put<ServiceOrder>(`/orders/${id}/status?status=${status}`),
 
@@ -270,6 +318,19 @@ export const orderApi = {
     const qs = reason ? `?reason=${encodeURIComponent(reason)}` : '';
     return put<ServiceOrder>(`/orders/${id}/cancel${qs}`);
   },
+
+  /** 根据房间号获取订单 */
+  getByRoom: (roomId: string) => get<ServiceOrder>(`/orders/room/${roomId}`),
+};
+
+// ==================== Package API ====================
+export const packageApi = {
+  /** 获取当前用户有效套餐 */
+  getActive: () => get<UserPackage | null>('/packages/active'),
+  /** 获取可购买的套餐列表 */
+  getConfigs: () => get<any[]>('/packages/configs'),
+  /** 购买套餐 */
+  purchase: (packageConfigId: number) => post<UserPackage>('/packages/purchase', { packageConfigId }),
 };
 
 // ==================== Payment API ====================
@@ -497,16 +558,136 @@ export const notificationApi = {
 // ==================== Chat API ====================
 export interface ChatMessage {
   id: number;
+  msgId?: string;
   senderId: number;
   receiverId: number;
   content: string;
-  type: string;
+  mediaUrl?: string;
+  mediaWidth?: number;
+  mediaHeight?: number;
+  type: string; // 'TEXT' | 'IMAGE' | 'ORDER_CARD'
   isRead: boolean;
+  readAt?: string;
+  roomId?: string;
   createdAt: string;
 }
 
 export const chatApi = {
-  getHistory: (userId: number, page = 0, size = 20) =>
-    get<ChatMessage[]>(`/chat/history?userId=${userId}&page=${page}&size=${size}`),
+  getHistory: (userId: number, roomId?: string, page = 0, size = 20) => {
+    const qs = new URLSearchParams({ userId: String(userId), page: String(page), size: String(size) });
+    if (roomId) qs.set('roomId', roomId);
+    return get<ChatMessage[]>(`/chat/history?${qs.toString()}`);
+  },
+  markRead: (fromUserId: number, roomId?: string) => {
+    const qs = roomId ? `?roomId=${roomId}` : '';
+    return put<void>(`/chat/read/${fromUserId}${qs}`);
+  },
 };
 
+// ==================== Upload API ====================
+export const uploadApi = {
+  uploadChatImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/upload/chat-image`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    
+    // 处理 401
+    if (res.status === 401) {
+      clearTokens();
+      window.location.href = '/login';
+      throw new Error('未登录或登录已过期');
+    }
+    
+    const json: ApiResult<{ url: string; size: number; contentType: string }> = await res.json();
+    if (json.code !== 200) throw new Error(json.message);
+    return json.data;
+  }
+};
+
+// ==================== 上门护理服务 ====================
+
+export interface ServiceCategory {
+  id: number;
+  name: string;
+  iconUrl: string | null;
+  description: string;
+  sortOrder: number;
+  status: number;
+}
+
+export interface ServiceItemSpec {
+  id: number;
+  itemId: number;
+  specName: string;
+  price: number;
+  originalPrice: number;
+  description: string | null;
+  sortOrder: number;
+}
+
+export interface ServiceItemMaterial {
+  id: number;
+  itemId: number;
+  materialName: string;
+  quantity: number;
+  unit: string;
+  price: number;
+}
+
+export interface ServiceItem {
+  id: number;
+  categoryId: number;
+  itemName: string;
+  itemNo: string;
+  description: string;
+  coverUrl: string | null;
+  serviceDuration: number;
+  basePrice: number;
+  trafficFee: number;
+  suitablePeople: string;
+  contraindications: string;
+  riskNotice: string;
+  notes: string;
+  specs?: ServiceItemSpec[];
+  materials?: ServiceItemMaterial[];
+}
+
+export interface Nurse {
+  id: number;
+  userId: number;
+  name: string;
+  avatarUrl: string | null;
+  phone: string;
+  title: string;
+  hospital: string;
+  department: string;
+  introduction: string;
+  serviceYears: number;
+  rating: number;
+  serviceCount: number;
+}
+
+export const serviceCategoryApi = {
+  getAll: (limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : '';
+    return get<ServiceCategory[]>(`/nursing/service-categories${qs}`);
+  },
+};
+
+export const serviceItemApi = {
+  getByCategory: (categoryId: number) => get<ServiceItem[]>(`/nursing/service-items?categoryId=${categoryId}`),
+  getDetail: (id: number) => get<ServiceItem>(`/nursing/service-items/${id}`),
+  getNurses: (itemId: number) => get<Nurse[]>(`/nursing/service-items/${itemId}/nurses`),
+};
+
+export const nurseApi = {
+  getAll: () => get<Nurse[]>('/nursing/nurses'),
+  getById: (id: number) => get<Nurse>(`/nursing/nurses/${id}`),
+};

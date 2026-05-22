@@ -136,44 +136,13 @@ export default function DoctorDetailScreen() {
           </div>
         </section>
 
-        {/* Services Section */}
+        {/* Introduction Section */}
         <section className="px-4 mt-8">
-          <h3 className="font-sans text-xl font-semibold text-on-surface mb-4">预约服务</h3>
-          <div className="grid grid-cols-1 gap-2">
-            {services.map((svc) => {
-              const isSelected = selectedService === svc.id;
-              return (
-                <button
-                  key={svc.id}
-                  onClick={() => setSelectedService(svc.id)}
-                  className={`rounded-xl p-4 flex items-center justify-between transition-all text-left ${isSelected
-                    ? 'bg-primary-fixed/20 border-2 border-primary shadow-[0_4px_20px_rgba(0,78,159,0.06)]'
-                    : 'bg-surface-container-lowest border border-surface-variant hover:bg-surface-container-low'
-                    }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${isSelected
-                      ? 'bg-primary-container text-on-primary-container'
-                      : 'bg-surface-container-high text-on-surface-variant'
-                      }`}>
-                      <svc.icon size={24} className={isSelected ? 'fill-current' : ''} />
-                    </div>
-                    <div>
-                      <p className="font-sans text-lg font-semibold text-on-surface">{svc.label}</p>
-                      <p className="font-sans text-sm text-on-surface-variant mt-1">{svc.desc}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0 flex items-center gap-3">
-                    <p className={`font-sans text-xl font-semibold ${isSelected ? 'text-primary' : 'text-on-surface'}`}>¥{svc.id === 'home' ? doctor.homeVisitPrice : doctor.consultPrice}</p>
-                    {isSelected ? (
-                      <CheckCircle size={24} className="text-primary fill-primary stroke-on-primary" />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full border-2 border-outline-variant"></div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+          <h3 className="font-sans text-xl font-semibold text-on-surface mb-4">医生简介</h3>
+          <div className="bg-surface-container-lowest border border-surface-variant rounded-xl p-4 shadow-sm">
+            <p className="font-sans text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
+              {doctor.introduction || '暂无简介'}
+            </p>
           </div>
         </section>
 
@@ -218,10 +187,6 @@ export default function DoctorDetailScreen() {
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 w-full bg-surface-container-lowest border-t border-surface-variant px-4 py-3 pb-safe flex gap-4 items-center z-50 shadow-[0_-4px_20px_rgba(0,92,186,0.04)]">
-        <Link to={`/chat/${doctor.userId}`} className="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors min-w-[56px]">
-          <MessageCircle size={24} />
-          <span className="font-['Atkinson_Hyperlegible_Next'] text-xs font-semibold mt-1">咨询</span>
-        </Link>
         <Link
           to={`/booking/${doctor.id}`}
           className="flex-1 min-h-[52px] bg-primary text-on-primary font-sans text-lg font-semibold rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-[0_4px_12px_rgba(0,78,159,0.2)]"

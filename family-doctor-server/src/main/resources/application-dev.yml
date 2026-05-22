@@ -45,3 +45,8 @@ logging:
     com.familydoctor: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# ==================== MinIO 对象存储 (虚机 Docker) ====================
+minio:
+  endpoint: http://192.168.56.105:9000
+  public-url: http://192.168.56.105:9000

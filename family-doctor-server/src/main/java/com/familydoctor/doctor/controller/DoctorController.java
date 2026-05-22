@@ -74,11 +74,11 @@ public class DoctorController {
      * TODO: Phase 2 实现 Redis GEORADIUS 查询
      */
     @GetMapping("/nearby")
-    public Result<List<Doctor>> getNearbyDoctors(
+    public Result<List<com.familydoctor.doctor.dto.NearbyDoctorVO>> getNearbyDoctors(
             @RequestParam double lat,
             @RequestParam double lng,
             @RequestParam(defaultValue = "5") double radiusKm) {
         // MVP: 返回所有可上门的在线医生
-        return Result.success(doctorRepository.findByCanHomeVisitTrueAndStatus(1));
+        return Result.success(doctorRepository.findNearbyDoctorsWithUser(1));
     }
 }
